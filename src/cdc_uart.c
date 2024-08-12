@@ -57,29 +57,6 @@ void cdc_uart_init(void) {
     gpio_set_pulls(PROBE_UART_TX, 1, 0);
     gpio_set_pulls(PROBE_UART_RX, 1, 0);
     uart_init(PROBE_UART_INTERFACE, PROBE_UART_BAUDRATE);
-
-#ifdef PROBE_UART_HWFC
-    /* HWFC implies that hardware flow control is implemented and the
-     * UART operates in "full-duplex" mode (See USB CDC PSTN120 6.3.12).
-     * Default to pulling in the active direction, so an unconnected CTS
-     * behaves the same as if CTS were not enabled. */
-    gpio_set_pulls(PROBE_UART_CTS, 0, 1);
-    gpio_set_function(PROBE_UART_RTS, GPIO_FUNC_UART);
-    gpio_set_function(PROBE_UART_CTS, GPIO_FUNC_UART);
-    uart_set_hw_flow(PROBE_UART_INTERFACE, true, true);
-#else
-#ifdef PROBE_UART_RTS
-    gpio_init(PROBE_UART_RTS);
-    gpio_set_dir(PROBE_UART_RTS, GPIO_OUT);
-    gpio_put(PROBE_UART_RTS, 1);
-#endif
-#endif
-
-#ifdef PROBE_UART_DTR
-    gpio_init(PROBE_UART_DTR);
-    gpio_set_dir(PROBE_UART_DTR, GPIO_OUT);
-    gpio_put(PROBE_UART_DTR, 1);
-#endif
 }
 
 bool cdc_task(void)
@@ -250,13 +227,6 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const* line_coding)
 
 void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
 {
-#ifdef PROBE_UART_RTS
-  gpio_put(PROBE_UART_RTS, !rts);
-#endif
-#ifdef PROBE_UART_DTR
-  gpio_put(PROBE_UART_DTR, !dtr);
-#endif
-
   /* CDC drivers use linestate as a bodge to activate/deactivate the interface.
    * Resume our UART polling on activate, stop on deactivate */
   if (!dtr && !rts) {
