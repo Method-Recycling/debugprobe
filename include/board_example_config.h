@@ -92,6 +92,6 @@
 #define PROBE_UART_RX_LED 7
 #define PROBE_UART_TX_LED 8
 
-#define PROBE_PRODUCT_STRING "Example Debug Probe"
+#define PROBE_PRODUCT_STRING "Test Jig V2"
 
 #endif

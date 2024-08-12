@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.12)
-
 include(pico_sdk_import.cmake)
 
 set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/freertos)
 include(freertos/portable/ThirdParty/GCC/RP2350_ARM_NTZ/FreeRTOS_Kernel_import.cmake)
+set(picotool_DIR  ~/dev/picotool)
 
 project(debugprobe)
 
@@ -52,10 +52,10 @@ target_compile_definitions (debugprobe PRIVATE
 
 option (DEBUG_ON_PICO "Compile firmware for the Pico instead of Debug Probe" OFF)
 if (DEBUG_ON_PICO)
-    target_compile_definitions (debugprobe PRIVATE 
+    target_compile_definitions (debugprobe PRIVATE
 	DEBUG_ON_PICO=1
     )
-    set_target_properties(debugprobe PROPERTIES 
+    set_target_properties(debugprobe PROPERTIES
         OUTPUT_NAME "debugprobe_on_pico"
     )
 endif ()

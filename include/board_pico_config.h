@@ -47,6 +47,6 @@
 
 #define PROBE_USB_CONNECTED_LED 25
 
-#define PROBE_PRODUCT_STRING "Debugprobe on Pico (CMSIS-DAP)"
+#define PROBE_PRODUCT_STRING "Test Jig V2"
 
 #endif
