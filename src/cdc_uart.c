@@ -51,7 +51,8 @@ static volatile uint tx_led_debounce;
 static uint rx_led_debounce;
 #endif
 
-void cdc_uart_init(void) {
+void cdc_uart_init(void)
+{
     gpio_set_function(PROBE_UART_TX, GPIO_FUNC_UART);
     gpio_set_function(PROBE_UART_RX, GPIO_FUNC_UART);
     gpio_set_pulls(PROBE_UART_TX, 1, 0);
@@ -61,86 +62,111 @@ void cdc_uart_init(void) {
 
 bool cdc_task(void)
 {
-    static int was_connected = 0;
-    static uint cdc_tx_oe = 0;
-    uint rx_len = 0;
-    bool keep_alive = false;
+	static int was_connected = 0;
+	static uint cdc_tx_oe = 0;
+	uint rx_len = 0;
+	bool keep_alive = false;
 
-    // Consume uart fifo regardless even if not connected
-    while(uart_is_readable(PROBE_UART_INTERFACE) && (rx_len < sizeof(rx_buf))) {
-        rx_buf[rx_len++] = uart_getc(PROBE_UART_INTERFACE);
-    }
+	// Consume uart fifo regardless even if not connected
+	while(uart_is_readable(PROBE_UART_INTERFACE) && (rx_len < sizeof(rx_buf)))
+	{
+		rx_buf[rx_len++] = uart_getc(PROBE_UART_INTERFACE);
+	}
 
-    if (tud_cdc_connected()) {
-        was_connected = 1;
-        int written = 0;
-        /* Implicit overflow if we don't write all the bytes to the host.
-         * Also throw away bytes if we can't write... */
-        if (rx_len) {
+	if (tud_cdc_connected())
+	{
+		was_connected = 1;
+		int written = 0;
+		/* Implicit overflow if we don't write all the bytes to the host.
+		* Also throw away bytes if we can't write... */
+		if (rx_len)
+		{
 #ifdef PROBE_UART_RX_LED
-          gpio_put(PROBE_UART_RX_LED, 1);
-          rx_led_debounce = debounce_ticks;
+			gpio_put(PROBE_UART_RX_LED, 1);
+			rx_led_debounce = debounce_ticks;
 #endif
-          written = MIN(tud_cdc_write_available(), rx_len);
-          if (rx_len > written)
-              cdc_tx_oe++;
 
-          if (written > 0) {
-            tud_cdc_write(rx_buf, written);
-            tud_cdc_write_flush();
-          }
-        } else {
+			written = MIN(tud_cdc_write_available(), rx_len);
+			if (rx_len > written)
+			{
+				cdc_tx_oe++;
+			}
+
+			if (written > 0)
+			{
+				tud_cdc_write(rx_buf, written);
+				tud_cdc_write_flush();
+			}
+		}
+		else
+		{
 #ifdef PROBE_UART_RX_LED
-          if (rx_led_debounce)
-            rx_led_debounce--;
-          else
-            gpio_put(PROBE_UART_RX_LED, 0);
+			if (rx_led_debounce)
+				rx_led_debounce--;
+			else
+				gpio_put(PROBE_UART_RX_LED, 0);
 #endif
-        }
+		}
 
-      /* Reading from a firehose and writing to a FIFO. */
-      size_t watermark = MIN(tud_cdc_available(), sizeof(tx_buf));
-      if (watermark > 0) {
-        size_t tx_len;
+		/* Reading from a firehose and writing to a FIFO. */
+		size_t watermark = MIN(tud_cdc_available(), sizeof(tx_buf));
+
+		if (watermark > 0)
+		{
+			size_t tx_len;
+
 #ifdef PROBE_UART_TX_LED
-        gpio_put(PROBE_UART_TX_LED, 1);
-        tx_led_debounce = debounce_ticks;
+			gpio_put(PROBE_UART_TX_LED, 1);
+			tx_led_debounce = debounce_ticks;
 #endif
-        /* Batch up to half a FIFO of data - don't clog up on RX */
-        watermark = MIN(watermark, 16);
-        tx_len = tud_cdc_read(tx_buf, watermark);
-        uart_write_blocking(PROBE_UART_INTERFACE, tx_buf, tx_len);
-      } else {
+			/* Batch up to half a FIFO of data - don't clog up on RX */
+			watermark = MIN(watermark, 16);
+			tx_len = tud_cdc_read(tx_buf, watermark);
+			uart_write_blocking(PROBE_UART_INTERFACE, tx_buf, tx_len);
+		}
+		else
+		{
 #ifdef PROBE_UART_TX_LED
-          if (tx_led_debounce)
-            tx_led_debounce--;
-          else
-            gpio_put(PROBE_UART_TX_LED, 0);
+			if (tx_led_debounce)
+			{
+				tx_led_debounce--;
+			}
+			else
+			{
+				gpio_put(PROBE_UART_TX_LED, 0);
+			}
 #endif
-      }
-      /* Pending break handling */
-      if (timed_break) {
-        if (((int)break_expiry - (int)xTaskGetTickCount()) < 0) {
-          timed_break = false;
-          uart_set_break(PROBE_UART_INTERFACE, false);
+		}
+		/* Pending break handling */
+		if (timed_break)
+		{
+			if (((int)break_expiry - (int)xTaskGetTickCount()) < 0)
+			{
+				timed_break = false;
+				uart_set_break(PROBE_UART_INTERFACE, false);
 #ifdef PROBE_UART_TX_LED
-          tx_led_debounce = 0;
+				tx_led_debounce = 0;
 #endif
-        } else {
-          keep_alive = true;
-        }
-      }
-    } else if (was_connected) {
-      tud_cdc_write_clear();
-      uart_set_break(PROBE_UART_INTERFACE, false);
-      timed_break = false;
-      was_connected = 0;
+			}
+			else
+			{
+				keep_alive = true;
+			}
+		}
+	}
+	else if (was_connected)
+	{
+		tud_cdc_write_clear();
+		uart_set_break(PROBE_UART_INTERFACE, false);
+		timed_break = false;
+		was_connected = 0;
 #ifdef PROBE_UART_TX_LED
-      tx_led_debounce = 0;
+		tx_led_debounce = 0;
 #endif
-      cdc_tx_oe = 0;
-    }
-    return keep_alive;
+		cdc_tx_oe = 0;
+	}
+
+	return keep_alive;
 }
 
 void cdc_thread(void *ptr)
