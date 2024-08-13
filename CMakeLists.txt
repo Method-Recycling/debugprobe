@@ -24,6 +24,7 @@ add_executable(debugprobe
         src/sw_dp_pio.c
         src/tusb_edpt_handler.c
         embedded_common/src/msg_protocol.c
+        src/test_jig.c
 )
 
 target_sources(debugprobe PRIVATE

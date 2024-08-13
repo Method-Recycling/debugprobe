@@ -32,6 +32,7 @@
 #include "probe_config.h"
 
 #include "msg_protocol.h"
+#include "test_jig.h"
 
 TaskHandle_t uart_taskhandle;
 TickType_t last_wake, interval = 100;
@@ -53,170 +54,37 @@ static volatile uint tx_led_debounce;
 static uint rx_led_debounce;
 #endif
 
-#define TEST_JIG_MSG_NONE 				(0x00)
-#define TEST_JIG_MSG_ACK 				(0x01)
-#define TEST_JIG_MSG_NACK 				(0x02)
-#define TEST_JIG_MSG_ERR 				(0x03)
-#define TEST_JIG_MSG_APPLY_4V2 			(0x04)
-#define TEST_JIG_MSG_APPLY_VOLTAGE 		(0x05)
-#define TEST_JIG_MSG_APPLY_LOW_VOLTAGE 	(0x06)
-#define TEST_JIG_MSG_APPLY_REVERSE_POL  (0x07)
-#define TEST_JIG_MSG_ENABLE_SARA_VUSB 	(0x08)
-#define TEST_JIG_MSG_ENABLE_BYPASS 		(0x09)
-#define TEST_JIG_MSG_GET_CURRENT 		(0x0A)
-#define TEST_JIG_MSG_GET_VOLTAGES 		(0x0B)
-#define TEST_JIG_MSG_GET_OC_4V2 		(0x0C)
-#define TEST_JIG_MSG_GET_VERSION 		(0x0D)
-#define TEST_JIG_MSG_ELMO_GET_WEIGHT 	(0x0E)
-#define TEST_JIG_MSG_ELMO_GET_VERSION 	(0x0F)
-#define TEST_JIG_MSG_RS485_TICKLE 		(0x10)
-#define TEST_JIG_MSG_ENABLE_ADC_PROOF 	(0x11)
-#define TEST_JIG_MSG_RESET 				(0xFE)
-#define TEST_JIG_MSG_PASS_THRU_TO_DUT 	(0xFF)
 
-#define TEST_JIG_TYPE_OSCAR 			(1)
-#define TEST_JIG_TYPE_ERNIE 			(2)
-#define TEST_JIG_TYPE_ELMO 				(3)
-#define TEST_JIG_TYPE_ELMO_WEIGHT_CAL 	(4)
+// // #define ENABLE_DUT_POWER_PIN
+// // #define ENABLE_CURRENT_MEASURE_PIN
 
-#define TEST_JIG_VERSION_MAJOR 			(2)
-#define TEST_JIG_VERSION_MINOR 			(0)
-#define TEST_JIG_VERSION_PATCH 			(0)
+// // // Perform initialisation
+// // int pico_led_init(void) {
+// //     gpio_init(PICO_DEFAULT_LED_PIN);
+// //     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+// //     return PICO_OK;
+// // }
 
-
-static msg_protocol_ctx_t input_msg_protocol = { };
-
-void write_to_cdc(uint8_t* buf, uint32_t buf_len);
-
-void send_ack(void)
-{
-	uint8_t  data[1] = { TEST_JIG_MSG_ACK };
-	uint16_t data_size = 1;
-	uint8_t  buf[16];
-	uint16_t buf_size = msg_protocol_pack(&input_msg_protocol, data, data_size, buf);;
-	write_to_cdc(buf, buf_size);
-}
-
-void send_nack(void)
-{
-	uint8_t  data[1] = { TEST_JIG_MSG_NACK };
-	uint16_t data_size = 1;
-	uint8_t  buf[4];
-	uint16_t buf_size = msg_protocol_pack(&input_msg_protocol, data, data_size, buf);
-	write_to_cdc(buf, buf_size);
-}
-void send_version(void) {
-	uint8_t  data[5];
-	uint16_t data_size = 0;
-
-	data[data_size++] = TEST_JIG_MSG_GET_VERSION;
-
-	data[data_size++] = TEST_JIG_TYPE_ERNIE;
-
-	data[data_size++] = TEST_JIG_VERSION_MAJOR;
-	data[data_size++] = TEST_JIG_VERSION_MINOR;
-	data[data_size++] = TEST_JIG_VERSION_PATCH;
-
-	uint8_t  buf[16];
-	uint16_t buf_size = msg_protocol_pack(&input_msg_protocol, data, data_size, buf);
-
-	write_to_cdc(buf, buf_size);
-}
-
-void process_input_message(uint8_t* data, uint16_t size)
-{
-	uint16_t idx = 0;
-	uint8_t msg_type = data[idx++];
-
-	switch (msg_type) {
-	case TEST_JIG_MSG_APPLY_VOLTAGE: {
-		// uint8_t enable = data[idx++];
-		// apply_voltage(enable);
-		send_ack();
-		break;
-	}
-
-	case TEST_JIG_MSG_APPLY_LOW_VOLTAGE: {
-		break;
-	}
-
-	case TEST_JIG_MSG_ENABLE_BYPASS: {
-		uint8_t enable = data[idx++];
-		// enable_ucurrent_short(enable);
-		send_ack();
-		break;
-	}
-
-	case TEST_JIG_MSG_RS485_TICKLE: {
-		// rxd_tickle = 0;
-		// do_tickle = 1;
-		break;
-	}
-
-	case TEST_JIG_MSG_GET_CURRENT: {
-		// req_current = 1;
-		break;
-	}
-
-	case TEST_JIG_MSG_GET_VOLTAGES: {
-		// req_voltage = 1;
-		break;
-	}
-
-	case TEST_JIG_MSG_GET_VERSION: {
-		send_version();
-		break;
-	}
-
-	case TEST_JIG_MSG_ENABLE_ADC_PROOF: {
-		// uint8_t enable = data[idx++];
-		// enable_adc_proof(enable);
-		send_ack();
-		break;
-	}
-
-	case TEST_JIG_MSG_RESET: {
-		// NVIC_SystemReset();
-		break;
-	}
-
-	case TEST_JIG_MSG_PASS_THRU_TO_DUT: {
-		// dut_uart_restart();
-		// pass_thru_to_dut(&data[idx], size - idx);
-		break;
-	}
-	case TEST_JIG_MSG_ELMO_GET_WEIGHT:
-	case TEST_JIG_MSG_ENABLE_SARA_VUSB:
-	case TEST_JIG_MSG_ELMO_GET_VERSION:
-	default: {
-		send_nack();
-	}
-	}
-}
-
-void process_input_bad_message(void)
-{
- 	send_nack();
-}
-
-
-static void init_msg_protocol()
-{
-	input_msg_protocol.rx_callback_func = process_input_message;
-	input_msg_protocol.rx_bad_crc_callback_func = process_input_bad_message;
-}
-
-
-void process_input_raw(uint8_t* data, uint16_t size)
-{
-	for (uint16_t i = 0; i < size; i++)
-	{
-		msg_protocol_process(&input_msg_protocol, data[i]);
-	}
-}
+// // // Turn the led on or off
+// // void pico_set_led(bool led_on) {
+// // #if defined(PICO_DEFAULT_LED_PIN)
+// //     // Just set the GPIO on or off
+// //     gpio_put(PICO_DEFAULT_LED_PIN, led_on);
+// // #elif defined(CYW43_WL_GPIO_LED_PIN)
+// //     // Ask the wifi "driver" to set the GPIO on or off
+// //     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
+// // #endif
+// // }
 
 
 void write_to_cdc(uint8_t* buf, uint32_t buf_len)
+{
+	tud_cdc_write(buf, buf_len);
+	tud_cdc_write_flush();
+}
+
+
+void write_to_uart(uint8_t* buf, uint32_t buf_len)
 {
 	tud_cdc_write(buf, buf_len);
 	tud_cdc_write_flush();
@@ -231,6 +99,7 @@ void cdc_uart_init(void)
     gpio_set_pulls(PROBE_UART_RX, 1, 0);
     uart_init(PROBE_UART_INTERFACE, PROBE_UART_BAUDRATE);
 }
+
 
 bool cdc_task(void)
 {
@@ -295,7 +164,7 @@ bool cdc_task(void)
 			watermark = MIN(watermark, 16);
 			tx_len = tud_cdc_read(tx_buf, watermark);
 
-			process_input_raw(tx_buf, tx_len);
+			tj_process_input_raw(tx_buf, tx_len);
 		}
 		else
 		{
@@ -342,12 +211,18 @@ bool cdc_task(void)
 	return keep_alive;
 }
 
+struct test_jig_ctx test_jig = {
+	.write_to_host = write_to_cdc,
+	.write_to_dut = write_to_uart
+};
+
 void cdc_thread(void *ptr)
 {
-	init_msg_protocol();
+	tj_init(&test_jig);
 	BaseType_t delayed;
 	last_wake = xTaskGetTickCount();
 	bool keep_alive;
+
 	/* Threaded with a polling interval that scales according to linerate */
 	while (1)
 	{
@@ -429,6 +304,7 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const* line_coding)
   vTaskResume(uart_taskhandle);
 }
 
+
 void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
 {
   /* CDC drivers use linestate as a bodge to activate/deactivate the interface.
@@ -446,6 +322,7 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
   } else
     vTaskResume(uart_taskhandle);
 }
+
 
 void tud_cdc_send_break_cb(uint8_t itf, uint16_t wValue) {
   switch(wValue) {
