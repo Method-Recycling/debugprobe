@@ -44,8 +44,8 @@ struct test_jig_ctx
 {
 	void (*write_to_host)(uint8_t*, uint32_t);
 	void (*write_to_dut)(uint8_t*, uint32_t);
-	// void (*apply_voltage)(bool);
-	// void (*enable_current_measure)(bool);
+	void (*apply_voltage)(bool);
+	void (*enable_current_measure)(bool);
 };
 
 void tj_init(struct test_jig_ctx* ctx);

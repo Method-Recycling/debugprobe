@@ -55,42 +55,6 @@ static uint rx_led_debounce;
 #endif
 
 
-// // #define ENABLE_DUT_POWER_PIN
-// // #define ENABLE_CURRENT_MEASURE_PIN
-
-// // // Perform initialisation
-// // int pico_led_init(void) {
-// //     gpio_init(PICO_DEFAULT_LED_PIN);
-// //     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-// //     return PICO_OK;
-// // }
-
-// // // Turn the led on or off
-// // void pico_set_led(bool led_on) {
-// // #if defined(PICO_DEFAULT_LED_PIN)
-// //     // Just set the GPIO on or off
-// //     gpio_put(PICO_DEFAULT_LED_PIN, led_on);
-// // #elif defined(CYW43_WL_GPIO_LED_PIN)
-// //     // Ask the wifi "driver" to set the GPIO on or off
-// //     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
-// // #endif
-// // }
-
-
-void write_to_cdc(uint8_t* buf, uint32_t buf_len)
-{
-	tud_cdc_write(buf, buf_len);
-	tud_cdc_write_flush();
-}
-
-
-void write_to_uart(uint8_t* buf, uint32_t buf_len)
-{
-	tud_cdc_write(buf, buf_len);
-	tud_cdc_write_flush();
-}
-
-
 void cdc_uart_init(void)
 {
     gpio_set_function(PROBE_UART_TX, GPIO_FUNC_UART);
@@ -212,14 +176,62 @@ bool cdc_task(void)
 }
 
 
+#define DUT_POWER_ENABLE_PIN 6
+#define CURRENT_MEASURE_ENABLE_PIN 7
+
+void init_gpios(void)
+{
+    gpio_init(DUT_POWER_ENABLE_PIN);
+    gpio_set_dir(DUT_POWER_ENABLE_PIN, GPIO_OUT);
+
+    gpio_init(CURRENT_MEASURE_ENABLE_PIN);
+    gpio_set_dir(CURRENT_MEASURE_ENABLE_PIN, GPIO_OUT);
+}
+
+
+void init_adcs(void)
+{
+
+}
+
+
+void write_to_cdc(uint8_t* buf, uint32_t buf_len)
+{
+	tud_cdc_write(buf, buf_len);
+	tud_cdc_write_flush();
+}
+
+
+void write_to_uart(uint8_t* buf, uint32_t buf_len)
+{
+	tud_cdc_write(buf, buf_len);
+	tud_cdc_write_flush();
+}
+
+
+void apply_voltage(bool enable)
+{
+	gpio_put(DUT_POWER_ENABLE_PIN, enable);
+}
+
+
+void enable_current_measure(bool enable)
+{
+	gpio_put(CURRENT_MEASURE_ENABLE_PIN, enable);
+}
+
+
 struct test_jig_ctx test_jig = {
-	.write_to_host = write_to_cdc,
-	.write_to_dut = write_to_uart
+	.write_to_host          = write_to_cdc,
+	.write_to_dut           = write_to_uart,
+	.apply_voltage          = apply_voltage,
+	.enable_current_measure = enable_current_measure
 };
 
 
 void cdc_thread(void *ptr)
 {
+	init_gpios();
 	tj_init(&test_jig);
 	BaseType_t delayed;
 	last_wake = xTaskGetTickCount();
