@@ -168,12 +168,6 @@ void process_input_message(uint8_t* data, uint16_t size)
 		break;
 	}
 
-	case TEST_JIG_MSG_ELMO_GET_VERSION: {
-		// elmo_rxd_version = 0;
-		// elmo_req_version = 1;
-		break;
-	}
-
 	case TEST_JIG_MSG_ENABLE_ADC_PROOF: {
 		// uint8_t enable = data[idx++];
 		// enable_adc_proof(enable);
