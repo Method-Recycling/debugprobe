@@ -65,8 +65,8 @@ struct test_jig_ctx
 	uint16_t (*read_adc)              (uint8_t);
 };
 
-void tj_init(struct test_jig_ctx* ctx);
-void tj_process_input_raw(uint8_t* data, uint16_t size);
+void tj_init              (struct test_jig_ctx* ctx);
+void tj_process_input_raw (uint8_t* data, uint16_t size);
 
 
 #endif /* TEST_JIG_H_ */

@@ -176,11 +176,7 @@ static void process_input_bad_message(void)
 
 void tj_init(struct test_jig_ctx* ctx)
 {
-    _ctx.write_to_host = ctx->write_to_host;
-    _ctx.write_to_dut = ctx->write_to_dut;
-    _ctx.apply_voltage = ctx->apply_voltage;
-    _ctx.enable_current_measure = ctx->enable_current_measure;
-    _ctx.read_adc = ctx->read_adc;
+    memcpy(&_ctx, ctx, sizeof(struct test_jig_ctx));
 
     input_msg_protocol.rx_callback_func = process_input_message;
 	input_msg_protocol.rx_bad_crc_callback_func = process_input_bad_message;
