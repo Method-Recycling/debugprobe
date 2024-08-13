@@ -79,7 +79,7 @@ static uint rx_led_debounce;
 #define TEST_JIG_TYPE_ELMO 				(3)
 #define TEST_JIG_TYPE_ELMO_WEIGHT_CAL 	(4)
 
-#define TEST_JIG_VERSION_MAJOR 			(1)
+#define TEST_JIG_VERSION_MAJOR 			(2)
 #define TEST_JIG_VERSION_MINOR 			(0)
 #define TEST_JIG_VERSION_PATCH 			(0)
 
@@ -93,13 +93,8 @@ void send_ack(void)
 	uint8_t  data[1] = { TEST_JIG_MSG_ACK };
 	uint16_t data_size = 1;
 	uint8_t  buf[16];
-	uint16_t buf_size = msg_protocol_pack(&input_msg_protocol, data, data_size, buf);
-
-	// HAL_UART_Transmit(&huart1, buf, buf_size, 1000);
-	tud_cdc_write(buf, buf_size);
-	tud_cdc_write_flush();
-	// write_to_cdc(data, data_size);
-	// write_to_cdc(buf, buf_size);
+	uint16_t buf_size = msg_protocol_pack(&input_msg_protocol, data, data_size, buf);;
+	write_to_cdc(buf, buf_size);
 }
 
 void send_nack(void)
@@ -118,7 +113,6 @@ void send_version(void) {
 
 	data[data_size++] = TEST_JIG_TYPE_ERNIE;
 
-
 	data[data_size++] = TEST_JIG_VERSION_MAJOR;
 	data[data_size++] = TEST_JIG_VERSION_MINOR;
 	data[data_size++] = TEST_JIG_VERSION_PATCH;
@@ -133,26 +127,16 @@ void process_input_message(uint8_t* data, uint16_t size)
 {
 	uint16_t idx = 0;
 	uint8_t msg_type = data[idx++];
-// #if defined(ERNIE_TEST_JIG) || defined(ELMO_TEST_JIG) || defined(ELMO_WEIGHT_CAL_JIG)
-// 	HAL_GPIO_TogglePin(LED_UART_ACTIVE_GPIO_Port, LED_UART_ACTIVE_Pin);
-// #endif
 
 	switch (msg_type) {
 	case TEST_JIG_MSG_APPLY_VOLTAGE: {
-		uint8_t enable = data[idx++];
+		// uint8_t enable = data[idx++];
 		// apply_voltage(enable);
 		send_ack();
 		break;
 	}
 
 	case TEST_JIG_MSG_APPLY_LOW_VOLTAGE: {
-		break;
-	}
-
-	case TEST_JIG_MSG_ENABLE_SARA_VUSB: {
-		uint8_t enable = data[idx++];
-		// enable_sara_usb_v(enable);
-		send_ack();
 		break;
 	}
 
@@ -184,18 +168,6 @@ void process_input_message(uint8_t* data, uint16_t size)
 		break;
 	}
 
-	case TEST_JIG_MSG_ELMO_GET_WEIGHT: {
-		// elmo_adc_num_samples 	= data[idx++];
-		// elmo_adc_gain 			= data[idx++];
-		// elmo_adc_rej_freq 		= data[idx++];
-		// elmo_adc_speed 			= data[idx++];
-		// elmo_adc_read_delay 	= unpack_u32(data, &idx);
-		// elmo_adc_read_timeout 	= unpack_u32(data, &idx);
-		// elmo_rxd_weight = 0;
-		// elmo_req_weight = 1;
-		break;
-	}
-
 	case TEST_JIG_MSG_ELMO_GET_VERSION: {
 		// elmo_rxd_version = 0;
 		// elmo_req_version = 1;
@@ -219,7 +191,9 @@ void process_input_message(uint8_t* data, uint16_t size)
 		// pass_thru_to_dut(&data[idx], size - idx);
 		break;
 	}
-
+	case TEST_JIG_MSG_ELMO_GET_WEIGHT:
+	case TEST_JIG_MSG_ENABLE_SARA_VUSB:
+	case TEST_JIG_MSG_ELMO_GET_VERSION:
 	default: {
 		send_nack();
 	}
@@ -230,9 +204,6 @@ void process_input_bad_message(void)
 {
  	send_nack();
 }
-
-
-
 
 
 static void init_msg_protocol()
@@ -253,41 +224,8 @@ void process_input_raw(uint8_t* data, uint16_t size)
 
 void write_to_cdc(uint8_t* buf, uint32_t buf_len)
 {
-		tud_cdc_write(buf, buf_len);
-		tud_cdc_write_flush();
-// 		return;
-// 		int written = 0;
-// 		/* Implicit overflow if we don't write all the bytes to the host.
-// 		* Also throw away bytes if we can't write... */
-// 		if (buf_len)
-// 		{
-
-// #ifdef PROBE_UART_RX_LED
-// 			gpio_put(PROBE_UART_RX_LED, 1);
-// 			rx_led_debounce = debounce_ticks;
-// #endif
-
-// 			written = MIN(tud_cdc_write_available(), buf_len);
-// 			if (buf_len > written)
-// 			{
-// 				// cdc_tx_oe++;
-// 			}
-
-// 			if (written > 0)
-// 			{
-// 				tud_cdc_write(buf, written);
-// 				tud_cdc_write_flush();
-// 			}
-// 		}
-// 		else
-// 		{
-// #ifdef PROBE_UART_RX_LED
-// 			if (rx_led_debounce)
-// 				rx_led_debounce--;
-// 			else
-// 				gpio_put(PROBE_UART_RX_LED, 0);
-// #endif
-// 		}
+	tud_cdc_write(buf, buf_len);
+	tud_cdc_write_flush();
 }
 
 
@@ -363,11 +301,7 @@ bool cdc_task(void)
 			watermark = MIN(watermark, 16);
 			tx_len = tud_cdc_read(tx_buf, watermark);
 
-			// uint8_t buf[] = {1,2,3,4};
-			// tud_cdc_write(buf, 4);
-			// tud_cdc_write_flush();
-			send_ack();
-			// uart_write_blocking(PROBE_UART_INTERFACE, tx_buf, tx_len);
+			process_input_raw(tx_buf, tx_len);
 		}
 		else
 		{
