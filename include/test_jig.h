@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
 enum test_jig_msg
 {
 	TEST_JIG_MSG_NONE 				= (0x00),
@@ -28,6 +29,7 @@ enum test_jig_msg
 	TEST_JIG_MSG_PASS_THRU_TO_DUT 	= (0xFF)
 };
 
+
 enum test_jig_type
 {
 	TEST_JIG_TYPE_OSCAR 			= (1),
@@ -36,22 +38,31 @@ enum test_jig_type
 	TEST_JIG_TYPE_ELMO_WEIGHT_CAL 	= (4)
 };
 
-#define TEST_JIG_VERSION_MAJOR 			(2)
-#define TEST_JIG_VERSION_MINOR 			(0)
-#define TEST_JIG_VERSION_PATCH 			(0)
 
-// Number of adc channels. (0: 3.3v, 1: 5v, 2: current)
-#define TEST_JIG_N_ADC_CHAN 3
-// Number of measurements to take for each reading
-#define TEST_JIG_N_ADC_MEAS 10
+enum test_jig_adc_chan
+{
+    TEST_JIG_ADC_3V3_CHAN     = (0),
+    TEST_JIG_ADC_5V_CHAN      = (1),
+    TEST_JIG_ADC_CURRENT_CHAN = (2),
+    TEST_JIG_ADC_N_CHAN       = (3)
+};
+
+
+#define TEST_JIG_VERSION_MAJOR    (2)
+#define TEST_JIG_VERSION_MINOR    (0)
+#define TEST_JIG_VERSION_PATCH    (0)
+
+// Number of measurements to take for each adc reading
+#define TEST_JIG_N_ADC_MEAS       (10)
 
 struct test_jig_ctx
 {
-    uint16_t voltages[TEST_JIG_N_ADC_CHAN];
-	void (*write_to_host)         (uint8_t*, uint32_t);
-	void (*write_to_dut)          (uint8_t*, uint32_t);
-	void (*apply_voltage)         (bool);
-	void (*enable_current_measure)(bool);
+    uint16_t voltages[TEST_JIG_ADC_N_CHAN];
+	void     (*write_to_host)         (uint8_t*, uint32_t);
+	void     (*write_to_dut)          (uint8_t*, uint32_t);
+	void     (*apply_voltage)         (bool);
+	void     (*enable_current_measure)(bool);
+	uint16_t (*read_adc)              (uint8_t);
 };
 
 void tj_init(struct test_jig_ctx* ctx);

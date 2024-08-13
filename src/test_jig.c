@@ -48,6 +48,7 @@ static void send_version(void)
 	_ctx.write_to_host(buf, buf_size);
 }
 
+static const float conversion_factor = 3.3f / (1 << 12);
 
 static void send_current(void)
 {
@@ -55,21 +56,22 @@ static void send_current(void)
 
 	// enable_ucurrent_short(0);
 
-	// for (uint8_t i = 0; i < 20; i++) {
-	// 	update_voltages();
-	// 	avg_current += current_voltage;
-	// 	HAL_Delay(100);
-	// }
+	for (uint8_t i = 0; i < TEST_JIG_N_ADC_MEAS; ++i)
+    {
+		avg_current += _ctx.read_adc(TEST_JIG_ADC_CURRENT_CHAN);
+		// HAL_Delay(100);
+	}
 
 	// enable_ucurrent_short(1);
 
-	// avg_current /= 20.f;
+	avg_current /= ((float)TEST_JIG_N_ADC_MEAS * 1.f);
+    avg_current *= conversion_factor;
 
 	uint8_t  data[3];
 	uint16_t data_size = 0;
 
 	data[data_size++] = TEST_JIG_MSG_GET_CURRENT;
-	// pack_f16(data, avg_current, 1e3, &data_size);
+	pack_f16(data, avg_current, 1e3, &data_size);
 
 	uint8_t  buf[8];
 	uint16_t buf_size = msg_protocol_pack(&input_msg_protocol, data, data_size, buf);
@@ -84,8 +86,10 @@ static void send_voltage(void)
 	uint16_t data_size = 0;
 
 	data[data_size++] = TEST_JIG_MSG_GET_VOLTAGES;
-    uint16_t v1 = 0xFF00;
-    uint16_t v2 = 0x00FF;
+
+    uint16_t v1 = _ctx.read_adc(TEST_JIG_ADC_3V3_CHAN) * conversion_factor;
+    uint16_t v2 = _ctx.read_adc(TEST_JIG_ADC_5V_CHAN) * conversion_factor;
+
 	pack_f16(data, v1, 1e3, &data_size);
 	pack_f16(data, v2, 1e3, &data_size);
 
@@ -176,6 +180,7 @@ void tj_init(struct test_jig_ctx* ctx)
     _ctx.write_to_dut = ctx->write_to_dut;
     _ctx.apply_voltage = ctx->apply_voltage;
     _ctx.enable_current_measure = ctx->enable_current_measure;
+    _ctx.read_adc = ctx->read_adc;
 
     input_msg_protocol.rx_callback_func = process_input_message;
 	input_msg_protocol.rx_bad_crc_callback_func = process_input_bad_message;

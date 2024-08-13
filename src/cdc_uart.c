@@ -196,6 +196,12 @@ void init_adcs(void)
     adc_gpio_init(ADC_5V_READ_PIN);
 }
 
+uint16_t read_adc(uint8_t channel)
+{
+	adc_select_input(channel);
+	return adc_read();
+}
+
 
 void write_to_cdc(uint8_t* buf, uint32_t buf_len)
 {
@@ -227,7 +233,8 @@ struct test_jig_ctx test_jig = {
 	.write_to_host          = write_to_cdc,
 	.write_to_dut           = write_to_uart,
 	.apply_voltage          = apply_voltage,
-	.enable_current_measure = enable_current_measure
+	.enable_current_measure = enable_current_measure,
+	.read_adc               = read_adc
 };
 
 
@@ -235,7 +242,9 @@ void cdc_thread(void *ptr)
 {
 	init_gpios();
 	init_adcs();
+
 	tj_init(&test_jig);
+
 	BaseType_t delayed;
 	last_wake = xTaskGetTickCount();
 	bool keep_alive;
