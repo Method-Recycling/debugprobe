@@ -23,6 +23,7 @@ add_executable(debugprobe
         src/get_serial.c
         src/sw_dp_pio.c
         src/tusb_edpt_handler.c
+        embedded_common/src/msg_protocol.c
 )
 
 target_sources(debugprobe PRIVATE
@@ -37,6 +38,7 @@ target_include_directories(debugprobe PRIVATE
         CMSIS_5/CMSIS/DAP/Firmware/Include/
         CMSIS_5/CMSIS/Core/Include/
         include/
+        embedded_common/Inc
         )
 
 target_compile_options(debugprobe PRIVATE -Wall)
@@ -59,7 +61,6 @@ if (DEBUG_ON_PICO)
         OUTPUT_NAME "debugprobe_on_pico"
     )
 endif ()
-
 
 target_link_libraries(debugprobe PRIVATE
         pico_multicore

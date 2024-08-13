@@ -1,0 +1,5 @@
+CMakeFiles/
+*.cmake
+CMakeCache.txt
+MakeFile
+Tests/embedded_common_test
