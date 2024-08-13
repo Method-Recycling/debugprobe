@@ -24,6 +24,7 @@ add_executable(debugprobe
         src/sw_dp_pio.c
         src/tusb_edpt_handler.c
         embedded_common/src/msg_protocol.c
+        embedded_common/src/helpers.c
         src/test_jig.c
 )
 
@@ -72,6 +73,7 @@ target_link_libraries(debugprobe PRIVATE
         hardware_pio
         FreeRTOS-Kernel
         FreeRTOS-Kernel-Heap1
+        hardware_adc
 )
 
 pico_set_binary_type(debugprobe copy_to_ram)

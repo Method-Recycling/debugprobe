@@ -28,7 +28,7 @@
 
 #define PROBE_IO_SWDI
 #define PROBE_CDC_UART
-// No reset pin 
+// No reset pin
 
 // PIO config
 #define PROBE_SM 0
@@ -44,11 +44,16 @@
 #define PROBE_UART_INTERFACE uart1
 #define PROBE_UART_BAUDRATE 115200
 
-#define PROBE_USB_CONNECTED_LED 2
+// #define PROBE_USB_CONNECTED_LED 2
 #define PROBE_DAP_CONNECTED_LED 15
 #define PROBE_DAP_RUNNING_LED 16
-#define PROBE_UART_RX_LED 7
-#define PROBE_UART_TX_LED 8
+// #define PROBE_UART_RX_LED 7
+// #define PROBE_UART_TX_LED 8
+
+
+#define DUT_POWER_ENABLE_PIN 6
+#define CURRENT_MEASURE_ENABLE_PIN 7
+
 
 #define PROBE_PRODUCT_STRING "Debug Probe (CMSIS-DAP)"
 

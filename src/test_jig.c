@@ -1,8 +1,11 @@
 #include "test_jig.h"
 #include "msg_protocol.h"
+#include "helpers.h"
+
 
 static struct test_jig_ctx _ctx;
 static msg_protocol_ctx_t input_msg_protocol = { };
+
 
 static void send_ack(void)
 {
@@ -13,6 +16,7 @@ static void send_ack(void)
 
 	_ctx.write_to_host(buf, buf_size);
 }
+
 
 static void send_nack(void)
 {
@@ -44,6 +48,54 @@ static void send_version(void)
 	_ctx.write_to_host(buf, buf_size);
 }
 
+
+static void send_current(void)
+{
+	float avg_current = 0.f;
+
+	// enable_ucurrent_short(0);
+
+	// for (uint8_t i = 0; i < 20; i++) {
+	// 	update_voltages();
+	// 	avg_current += current_voltage;
+	// 	HAL_Delay(100);
+	// }
+
+	// enable_ucurrent_short(1);
+
+	// avg_current /= 20.f;
+
+	uint8_t  data[3];
+	uint16_t data_size = 0;
+
+	data[data_size++] = TEST_JIG_MSG_GET_CURRENT;
+	// pack_f16(data, avg_current, 1e3, &data_size);
+
+	uint8_t  buf[8];
+	uint16_t buf_size = msg_protocol_pack(&input_msg_protocol, data, data_size, buf);
+
+    _ctx.write_to_host(buf, buf_size);
+}
+
+
+static void send_voltage(void)
+{
+	uint8_t  data[5];
+	uint16_t data_size = 0;
+
+	data[data_size++] = TEST_JIG_MSG_GET_VOLTAGES;
+    uint16_t v1 = 0xFF00;
+    uint16_t v2 = 0x00FF;
+	pack_f16(data, v1, 1e3, &data_size);
+	pack_f16(data, v2, 1e3, &data_size);
+
+	uint8_t  buf[12];
+	uint16_t buf_size = msg_protocol_pack(&input_msg_protocol, data, data_size, buf);
+
+    _ctx.write_to_host(buf, buf_size);
+}
+
+
 static void process_input_message(uint8_t* data, uint16_t size)
 {
 	uint16_t idx = 0;
@@ -69,18 +121,16 @@ static void process_input_message(uint8_t* data, uint16_t size)
 	}
 
 	case TEST_JIG_MSG_RS485_TICKLE: {
-		// rxd_tickle = 0;
-		// do_tickle = 1;
 		break;
 	}
 
 	case TEST_JIG_MSG_GET_CURRENT: {
-		// req_current = 1;
+		send_current();
 		break;
 	}
 
 	case TEST_JIG_MSG_GET_VOLTAGES: {
-		// req_voltage = 1;
+		send_voltage();
 		break;
 	}
 
@@ -109,17 +159,15 @@ static void process_input_message(uint8_t* data, uint16_t size)
 	case TEST_JIG_MSG_ELMO_GET_WEIGHT:
 	case TEST_JIG_MSG_ENABLE_SARA_VUSB:
 	case TEST_JIG_MSG_ELMO_GET_VERSION:
-	default: {
-		send_nack();
-	}
+	default: { send_nack();}
 	}
 }
+
 
 static void process_input_bad_message(void)
 {
  	send_nack();
 }
-
 
 
 void tj_init(struct test_jig_ctx* ctx)
@@ -132,6 +180,7 @@ void tj_init(struct test_jig_ctx* ctx)
     input_msg_protocol.rx_callback_func = process_input_message;
 	input_msg_protocol.rx_bad_crc_callback_func = process_input_bad_message;
 }
+
 
 void tj_process_input_raw(uint8_t* data, uint16_t size)
 {

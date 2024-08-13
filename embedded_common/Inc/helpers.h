@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#define TESTING
 #ifndef TESTING
 #include "main.h"
 #endif

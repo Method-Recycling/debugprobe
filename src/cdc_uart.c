@@ -24,6 +24,8 @@
  */
 
 #include <pico/stdlib.h>
+#include "hardware/gpio.h"
+#include "hardware/adc.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -176,9 +178,6 @@ bool cdc_task(void)
 }
 
 
-#define DUT_POWER_ENABLE_PIN 6
-#define CURRENT_MEASURE_ENABLE_PIN 7
-
 void init_gpios(void)
 {
     gpio_init(DUT_POWER_ENABLE_PIN);
@@ -188,10 +187,13 @@ void init_gpios(void)
     gpio_set_dir(CURRENT_MEASURE_ENABLE_PIN, GPIO_OUT);
 }
 
-
+#include "board_pico_config.h"
 void init_adcs(void)
 {
-
+    adc_init();
+    adc_gpio_init(ADC_CURRENT_READ_PIN);
+    adc_gpio_init(ADC_3V3_READ_PIN);
+    adc_gpio_init(ADC_5V_READ_PIN);
 }
 
 
@@ -232,6 +234,7 @@ struct test_jig_ctx test_jig = {
 void cdc_thread(void *ptr)
 {
 	init_gpios();
+	init_adcs();
 	tj_init(&test_jig);
 	BaseType_t delayed;
 	last_wake = xTaskGetTickCount();

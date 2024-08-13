@@ -40,11 +40,17 @@ enum test_jig_type
 #define TEST_JIG_VERSION_MINOR 			(0)
 #define TEST_JIG_VERSION_PATCH 			(0)
 
+// Number of adc channels. (0: 3.3v, 1: 5v, 2: current)
+#define TEST_JIG_N_ADC_CHAN 3
+// Number of measurements to take for each reading
+#define TEST_JIG_N_ADC_MEAS 10
+
 struct test_jig_ctx
 {
-	void (*write_to_host)(uint8_t*, uint32_t);
-	void (*write_to_dut)(uint8_t*, uint32_t);
-	void (*apply_voltage)(bool);
+    uint16_t voltages[TEST_JIG_N_ADC_CHAN];
+	void (*write_to_host)         (uint8_t*, uint32_t);
+	void (*write_to_dut)          (uint8_t*, uint32_t);
+	void (*apply_voltage)         (bool);
 	void (*enable_current_measure)(bool);
 };
 
