@@ -57,28 +57,21 @@ void msg_protocol_encode(uint8_t value, uint8_t* payload, uint16_t* len) {
 }
 
 void msg_protocol_decode(msg_protocol_ctx_t* ctx) {
-	// if (ctx->crc_handle != NULL) {
-		uint16_t packed_crc = 0;
-		uint16_t actual_crc = 0;
+	uint16_t packed_crc = 0;
+	uint16_t actual_crc = 0;
 
-		memcpy((uint8_t*)&packed_crc, &ctx->rxd_data[ctx->rxd_size - sizeof(uint16_t)], sizeof(uint16_t));
-		// actual_crc = (uint16_t)HAL_CRC_Calculate(ctx->crc_handle, (uint32_t*)ctx->rxd_data, ctx->rxd_size - sizeof(uint16_t));
-		actual_crc = (uint16_t)crc_ccitt(ctx->rxd_data, ctx->rxd_size - sizeof(uint16_t));
+	memcpy((uint8_t*)&packed_crc, &ctx->rxd_data[ctx->rxd_size - sizeof(uint16_t)], sizeof(uint16_t));
+	actual_crc = (uint16_t)crc_ccitt(ctx->rxd_data, ctx->rxd_size - sizeof(uint16_t));
 
-		if (packed_crc == actual_crc) {
-			if (ctx->rx_callback_func != NULL) {
-				ctx->rx_callback_func(ctx->rxd_data, ctx->rxd_size - sizeof(uint16_t));
-			}
-		} else {
-			if (ctx->rx_bad_crc_callback_func != NULL) {
-				ctx->rx_bad_crc_callback_func();
-			}
+	if (packed_crc == actual_crc) {
+		if (ctx->rx_callback_func != NULL) {
+			ctx->rx_callback_func(ctx->rxd_data, ctx->rxd_size - sizeof(uint16_t));
 		}
-	// } else {
-	// 	if (ctx->rx_callback_func != NULL) {
-	// 		ctx->rx_callback_func(ctx->rxd_data, ctx->rxd_size);
-	// 	}
-	// }
+	} else {
+		if (ctx->rx_bad_crc_callback_func != NULL) {
+			ctx->rx_bad_crc_callback_func();
+		}
+	}
 }
 
 void msg_protocol_process(msg_protocol_ctx_t* ctx, uint8_t value) {
@@ -119,14 +112,10 @@ uint32_t msg_protocol_pack(msg_protocol_ctx_t* ctx, uint8_t* data, uint16_t data
 		msg_protocol_encode(data[i], buffer, &size);
 	}
 
-	// if (ctx->crc_handle != NULL) {
-		// uint16_t crc = (uint16_t)HAL_CRC_Calculate(ctx->crc_handle, (uint32_t*)data, data_size);
-		uint16_t crc = (uint16_t)crc_ccitt(data, data_size);
-		// uint16_t crc = 0xF0F0;
+	uint16_t crc = (uint16_t)crc_ccitt(data, data_size);
 
-		msg_protocol_encode(crc & 0xFF, buffer, &size);
-		msg_protocol_encode((crc >> 8) & 0xFF, buffer, &size);
-	// }
+	msg_protocol_encode(crc & 0xFF, buffer, &size);
+	msg_protocol_encode((crc >> 8) & 0xFF, buffer, &size);
 
 	buffer[size++] = PACKET_DELIM_FLAG;
 

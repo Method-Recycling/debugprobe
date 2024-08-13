@@ -211,10 +211,12 @@ bool cdc_task(void)
 	return keep_alive;
 }
 
+
 struct test_jig_ctx test_jig = {
 	.write_to_host = write_to_cdc,
 	.write_to_dut = write_to_uart
 };
+
 
 void cdc_thread(void *ptr)
 {
@@ -237,6 +239,7 @@ void cdc_thread(void *ptr)
 		}
 	}
 }
+
 
 void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const* line_coding)
 {
