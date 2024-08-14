@@ -4,6 +4,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifndef TEST_JIG_VERSION_MAJOR
+#define TEST_JIG_VERSION_MAJOR    (9)
+#endif /* TEST_JIG_VERSION_MAJOR */
+#ifndef TEST_JIG_VERSION_MINOR
+#define TEST_JIG_VERSION_MINOR    (9)
+#endif /* TEST_JIG_VERSION_MINOR */
+#ifndef TEST_JIG_VERSION_PATCH
+#define TEST_JIG_VERSION_PATCH    (9)
+#endif /* TEST_JIG_VERSION_PATCH */
+
 
 enum test_jig_msg
 {
@@ -48,16 +58,12 @@ enum test_jig_adc_chan
 };
 
 
-#define TEST_JIG_VERSION_MAJOR    (2)
-#define TEST_JIG_VERSION_MINOR    (0)
-#define TEST_JIG_VERSION_PATCH    (0)
 
 // Number of measurements to take for each adc reading
 #define TEST_JIG_N_ADC_MEAS       (10)
 
 struct test_jig_ctx
 {
-    uint16_t voltages[TEST_JIG_ADC_N_CHAN];
 	void     (*write_to_host)         (uint8_t*, uint32_t);
 	void     (*write_to_dut)          (uint8_t*, uint32_t);
 	void     (*apply_voltage)         (bool);
