@@ -47,6 +47,7 @@
 #include "tusb_edpt_handler.h"
 #include "DAP.h"
 
+#include "loadcell.h"
 // UART0 for debugprobe debug
 // UART1 for debugprobe to target device
 
@@ -58,6 +59,7 @@ static uint8_t RxDataBuffer[CFG_TUD_HID_EP_BUFSIZE];
 #define UART_TASK_PRIO (tskIDLE_PRIORITY + 3)
 #define TUD_TASK_PRIO  (tskIDLE_PRIORITY + 2)
 #define DAP_TASK_PRIO  (tskIDLE_PRIORITY + 1)
+#define LOADCELL_TASK_PRIO  (tskIDLE_PRIORITY + 1)
 
 TaskHandle_t dap_taskhandle, tud_taskhandle;
 
@@ -92,7 +94,8 @@ int main(void) {
     usb_serial_init();
     cdc_uart_init();
     tusb_init();
-    stdio_uart_init();
+    // stdio_uart_init();
+    loadcell_init();
 
     DAP_Setup();
 
@@ -106,6 +109,7 @@ int main(void) {
         xTaskCreate(usb_thread, "TUD", configMINIMAL_STACK_SIZE, NULL, TUD_TASK_PRIO, &tud_taskhandle);
         /* Lowest priority thread is debug - need to shuffle buffers before we can toggle swd... */
         xTaskCreate(dap_thread, "DAP", configMINIMAL_STACK_SIZE, NULL, DAP_TASK_PRIO, &dap_taskhandle);
+        xTaskCreate(loadcell_thread, "LOADCELL", configMINIMAL_STACK_SIZE, NULL, LOADCELL_TASK_PRIO, &loadcell_taskhandle);
         vTaskStartScheduler();
     }
 

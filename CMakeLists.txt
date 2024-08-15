@@ -26,6 +26,7 @@ add_executable(debugprobe
         embedded_common/src/msg_protocol.c
         embedded_common/src/helpers.c
         src/test_jig.c
+        src/loadcell.c
 )
 
 target_sources(debugprobe PRIVATE

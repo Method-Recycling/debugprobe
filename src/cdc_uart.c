@@ -57,6 +57,11 @@ static uint rx_led_debounce;
 #endif
 
 
+// static bool probe_mode = true;
+void write_to_cdc(uint8_t* buf, uint32_t buf_len);
+void write_to_uart(uint8_t* buf, uint32_t buf_len);
+
+
 void cdc_uart_init(void)
 {
     gpio_set_function(PROBE_UART_TX, GPIO_FUNC_UART);
@@ -67,7 +72,7 @@ void cdc_uart_init(void)
 }
 
 
-bool cdc_task(void)
+bool cdc_task(bool probe_mode)
 {
 	static int was_connected = 0;
 	static uint cdc_tx_oe = 0;
@@ -130,7 +135,15 @@ bool cdc_task(void)
 			watermark = MIN(watermark, 16);
 			tx_len = tud_cdc_read(tx_buf, watermark);
 
-			tj_process_input_raw(tx_buf, tx_len);
+			if(probe_mode)
+			{
+				write_to_uart(tx_buf, tx_len);
+			}
+			else
+			{
+				tj_process_input_raw(tx_buf, tx_len);
+			}
+
 		}
 		else
 		{
@@ -185,6 +198,9 @@ void init_gpios(void)
 
     gpio_init(CURRENT_MEASURE_ENABLE_PIN);
     gpio_set_dir(CURRENT_MEASURE_ENABLE_PIN, GPIO_OUT);
+
+	gpio_init(TESTJIG_MODE_PIN);
+	gpio_set_dir(TESTJIG_MODE_PIN, GPIO_IN);
 }
 
 #include "board_pico_config.h"
@@ -195,6 +211,7 @@ void init_adcs(void)
     adc_gpio_init(ADC_3V3_READ_PIN);
     adc_gpio_init(ADC_5V_READ_PIN);
 }
+
 
 uint16_t read_adc(uint8_t channel)
 {
@@ -212,8 +229,7 @@ void write_to_cdc(uint8_t* buf, uint32_t buf_len)
 
 void write_to_uart(uint8_t* buf, uint32_t buf_len)
 {
-	tud_cdc_write(buf, buf_len);
-	tud_cdc_write_flush();
+	uart_write_blocking(PROBE_UART_INTERFACE, buf, buf_len);
 }
 
 
@@ -242,8 +258,12 @@ void cdc_thread(void *ptr)
 {
 	init_gpios();
 	init_adcs();
+	bool probe_mode = gpio_get(TESTJIG_MODE_PIN);
 
-	tj_init(&test_jig);
+	if(!probe_mode)
+	{
+		tj_init(&test_jig);
+	}
 
 	BaseType_t delayed;
 	last_wake = xTaskGetTickCount();
@@ -252,7 +272,7 @@ void cdc_thread(void *ptr)
 	/* Threaded with a polling interval that scales according to linerate */
 	while (1)
 	{
-		keep_alive = cdc_task();
+		keep_alive = cdc_task(probe_mode);
 		if (!keep_alive)
 		{
 			delayed = xTaskDelayUntil(&last_wake, interval);
