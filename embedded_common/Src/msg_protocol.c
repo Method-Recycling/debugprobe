@@ -36,7 +36,7 @@ static const uint16_t ccitt_hash[] = {
     0x6e17,0x7e36,0x4e55,0x5e74,0x2e93,0x3eb2,0x0ed1,0x1ef0,
 };
 
-uint16_t crc_ccitt(const uint8_t* buffer, size_t size)
+static uint16_t crc_ccitt(const uint8_t* buffer, size_t size)
 {
     uint16_t crc = 0xFFFF;
     while (size-- > 0)
