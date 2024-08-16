@@ -1,7 +1,7 @@
 #ifndef LOADCELL_H_
 #define LOADCELL_H_
 
-
+#include <stdint.h>
 #include <pico/stdlib.h>
 #include "probe_config.h"
 
