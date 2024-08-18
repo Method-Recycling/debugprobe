@@ -70,6 +70,7 @@ struct loadcell_ctx
 {
 	uint8_t address;
 	uint16_t current_weight;
+	uint8_t id_rate;
 	uint8_t weight_data_buf[9];
 	uint8_t zero_data_buf[9];
 	uint8_t accel_buf[9];
@@ -78,20 +79,28 @@ struct loadcell_ctx
 	uint8_t address_buf[9];
 };
 
+#define BROADCAST_ID (0xFF)
+
 
 static struct loadcell_ctx ctx = {
 	.address = 1,
-	.current_weight = 0
+	.current_weight = 0,
+	.id_rate = 0
 };
 
 
 TaskHandle_t loadcell_taskhandle;
 static uint8_t rx_buf[64];
+static TickType_t last_wake, interval = 100;
+
+const uint8_t weight_incr = 1; // how much the weight will increment after each reading
+const uint8_t n_readings  = 5;
+
 
 /* Response handlers */
 static void send_weight_response()
 {
-	uint8_t buf[] = {ctx.address, 0x03, 0x04, 0x01, 0x31, 0xD4, 0xC0, 0x00, 0x00};
+	uint8_t buf[] = {ctx.address, READ_DATA_CODE, 0x04, 0x01, 0x31, 0xD4, 0xC0, 0x00, 0x00};
 	append_checksum(buf, sizeof(buf));
 	uart_write_blocking(LOADCELL_UART_INTERFACE, buf, sizeof(buf));
 }
@@ -99,7 +108,7 @@ static void send_weight_response()
 
 static void send_zero_response()
 {
-	uint8_t buf[] = {ctx.address, 0x10, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00};
+	uint8_t buf[] = {ctx.address, WRITE_DATA_CODE, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00};
 	append_checksum(buf, sizeof(buf));
 	uart_write_blocking(LOADCELL_UART_INTERFACE, buf, sizeof(buf));
 }
@@ -107,7 +116,7 @@ static void send_zero_response()
 
 static void send_accel_response()
 {
-	uint8_t buf[] = {ctx.address, 0x10, 0x00, 0x09, 0x00, 0x02, 0x00, 0x00};
+	uint8_t buf[] = {ctx.address, WRITE_DATA_CODE, 0x00, 0x09, 0x00, 0x02, 0x00, 0x00};
 	append_checksum(buf, sizeof(buf));
 	uart_write_blocking(LOADCELL_UART_INTERFACE, buf, sizeof(buf));
 }
@@ -115,19 +124,23 @@ static void send_accel_response()
 
 static void send_id_rate_response()
 {
-
+	uint8_t buf[] = {ctx.address, WRITE_DATA_CODE, 0x04, 0x0F, 0x00, 0x00, ctx.id_rate, 0x00, 0x00};
+	append_checksum(buf, sizeof(buf));
+	uart_write_blocking(LOADCELL_UART_INTERFACE, buf, sizeof(buf));
 }
 
 
 static void send_filter_param_response()
 {
-
+	uint8_t buf[] = {ctx.address, WRITE_DATA_CODE, 0x00, 0x0F, 0x00, 0x02, 0x00, 0x00};
+	append_checksum(buf, sizeof(buf));
+	uart_write_blocking(LOADCELL_UART_INTERFACE, buf, sizeof(buf));
 }
 
 
 static void send_address_response()
 {
-	uint8_t buf[] = {ctx.address, 0x10, 0x00, 0x0F, 0x00, 0x02, 0x00, 0x00};
+	uint8_t buf[] = {ctx.address, WRITE_DATA_CODE, 0x00, 0x0F, 0x00, 0x02, 0x00, 0x00};
 	append_checksum(buf, sizeof(buf));
 	uart_write_blocking(LOADCELL_UART_INTERFACE, buf, sizeof(buf));
 }
@@ -183,7 +196,7 @@ static void process_message(uint8_t* buf, uint8_t buf_len)
 	uint16_t fn_code    = buf[1];
 	uint16_t reg_addr 	= ((buf[2] << 8) & 0xFF) | (buf[3] & 0xFF);
 
-	if(request_id != ctx.address || !verify_checksum(buf, buf_len))
+	if(((request_id != ctx.address) && (request_id != BROADCAST_ID)) || !verify_checksum(buf, buf_len))
 	{
 		return;
 	}
@@ -232,8 +245,6 @@ bool loadcell_task(void)
     return false;
 }
 
-
-static TickType_t last_wake, interval = 100;
 
 void loadcell_thread(void* ptr)
 {
