@@ -1,3 +1,18 @@
+# Method Test Jig V2
+
+The test jig is based on a fork of the raspberry pi pico debug probe.
+
+The device has 2 modes:
+- Debug probe
+    - Essentially the same functionality as the base pico debugprobe
+    - Enables DUT power rail by default
+
+- Test jig
+    - For use with the device comissioner (specifically test_jig.py)
+
+The mode is set via the mode switch. This switch is read on device initialisation, so to change mode the device will have to be power cycled.
+
+
 # Debugprobe
 
 Firmware source for the Raspberry Pi Debug Probe SWD/UART accessory. Can also be run on a Raspberry Pi Pico.

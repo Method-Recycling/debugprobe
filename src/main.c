@@ -56,10 +56,10 @@ static uint8_t RxDataBuffer[CFG_TUD_HID_EP_BUFSIZE];
 
 #define THREADED 1
 
+#define LOADCELL_TASK_PRIO  (tskIDLE_PRIORITY + 4)
 #define UART_TASK_PRIO (tskIDLE_PRIORITY + 3)
 #define TUD_TASK_PRIO  (tskIDLE_PRIORITY + 2)
 #define DAP_TASK_PRIO  (tskIDLE_PRIORITY + 1)
-#define LOADCELL_TASK_PRIO  (tskIDLE_PRIORITY + 1)
 
 TaskHandle_t dap_taskhandle, tud_taskhandle;
 
