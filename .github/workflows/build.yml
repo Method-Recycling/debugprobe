@@ -4,24 +4,30 @@ on: [push]
 
 jobs:
     build:
-        name: Build example blink program
         runs-on: ubuntu-latest
-        permissions:
-            contents: read
 
         steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+        - uses: actions/checkout@v3
 
-            - name: Build Blink Example
-              id: build
-              uses: samyarsadat/Pico-Build-Action@v1
-              with:
-                  source_dir: "."
-                  cmake_args: "-DDEBUG_ON_PICO=ON"
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: 3.x
 
-            - name: Upload Build Artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: workspace_artifacts
-                  path: ${{steps.build.outputs.output_dir}}
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install cmake pico-sdk
+
+        - name: Build Pico Project
+          run: |
+            mkdir build
+            cd build
+            cmake -DPICO_SDK_PATH=/opt/pico-sdk -DDEBUG_ON_PICO=ON ..
+            make
+
+        - name: Upload Artifact
+          uses: actions/upload-artifact@v3
+          with:
+            name: pico-project
+            path: build/*.uf2
