@@ -48,6 +48,7 @@ static void send_version(void)
 	_ctx.write_to_host(buf, buf_size);
 }
 
+
 static const float conversion_factor = 3.3f / (1 << 12);
 
 static void send_current(void)
@@ -158,6 +159,7 @@ static void process_input_message(uint8_t* data, uint16_t size)
 	case TEST_JIG_MSG_PASS_THRU_TO_DUT: {
 		// dut_uart_restart();
 		_ctx.write_to_dut(&data[idx], size - idx);
+		// send_ack();
 		break;
 	}
 	case TEST_JIG_MSG_ELMO_GET_WEIGHT:

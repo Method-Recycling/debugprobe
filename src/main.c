@@ -32,8 +32,7 @@
 #include <string.h>
 
 #if PICO_SDK_VERSION_MAJOR >= 2
-// #include "bsp/board_api.h"
-#include "bsp/board.h"
+#include "bsp/board_api.h"
 #else
 #include "bsp/board.h"
 #endif

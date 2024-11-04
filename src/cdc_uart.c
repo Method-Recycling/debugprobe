@@ -37,15 +37,15 @@
 #include "test_jig.h"
 
 TaskHandle_t uart_taskhandle;
-TickType_t last_wake, interval = 100;
+TickType_t last_wake, interval = 50;
 volatile TickType_t break_expiry;
 volatile bool timed_break;
 
 /* Max 1 FIFO worth of data */
-static uint8_t tx_buf[64];
-static uint8_t rx_buf[64];
+static uint8_t tx_buf[255];
+static uint8_t rx_buf[255];
 // Actually s^-1 so 25ms
-#define DEBOUNCE_MS 40
+#define DEBOUNCE_MS 80
 static uint debounce_ticks = 5;
 
 #ifdef PROBE_UART_TX_LED
@@ -55,6 +55,10 @@ static volatile uint tx_led_debounce;
 #ifdef PROBE_UART_RX_LED
 static uint rx_led_debounce;
 #endif
+
+
+static msg_protocol_ctx_t dut_shell_msg_protocol = { };
+
 
 
 // static bool probe_mode = true;
@@ -105,9 +109,21 @@ bool cdc_task(bool probe_mode)
 			}
 
 			if (written > 0)
-			{
-				tud_cdc_write(rx_buf, written);
-				tud_cdc_write_flush();
+			{	
+				if(probe_mode)
+				{
+					tud_cdc_write(rx_buf, written);
+					tud_cdc_write_flush();
+				}
+				else
+				{
+					uint8_t data[100] = { TEST_JIG_MSG_PASS_THRU_TO_DUT };
+					memcpy(&data[1], rx_buf, written);
+					uint8_t  buf[100] = { };
+					uint16_t buf_size = msg_protocol_pack(&dut_shell_msg_protocol, data, written+1, buf);
+					tud_cdc_write(buf, buf_size);
+					tud_cdc_write_flush();
+				}
 			}
 		}
 		else
@@ -132,7 +148,7 @@ bool cdc_task(bool probe_mode)
 			tx_led_debounce = debounce_ticks;
 #endif
 			/* Batch up to half a FIFO of data - don't clog up on RX */
-			watermark = MIN(watermark, 16);
+			watermark = MIN(watermark, 100);
 			tx_len = tud_cdc_read(tx_buf, watermark);
 
 			if(probe_mode)
@@ -292,7 +308,7 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const* line_coding)
   /* Set the tick thread interval to the amount of time it takes to
    * fill up half a FIFO. Millis is too coarse for integer divide.
    */
-  uint32_t micros = (1000 * 1000 * 16 * 10) / MAX(line_coding->bit_rate, 1);
+  uint32_t micros = (5000 * 1000 * 16 * 10) / MAX(line_coding->bit_rate, 1);
   /* Modifying state, so park the thread before changing it. */
   vTaskSuspend(uart_taskhandle);
   interval = MAX(1, micros / ((1000 * 1000) / configTICK_RATE_HZ));

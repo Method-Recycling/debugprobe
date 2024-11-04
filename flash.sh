@@ -1,0 +1,1 @@
+cp /Users/zacrogers/Documents/method/debugprobe/build/debugprobe_on_pico.uf2 /Volumes/RPI-RP2

@@ -3,16 +3,18 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "board_pico_config.h"
 
-#ifndef TEST_JIG_VERSION_MAJOR
-#define TEST_JIG_VERSION_MAJOR    (9)
-#endif /* TEST_JIG_VERSION_MAJOR */
-#ifndef TEST_JIG_VERSION_MINOR
-#define TEST_JIG_VERSION_MINOR    (9)
-#endif /* TEST_JIG_VERSION_MINOR */
-#ifndef TEST_JIG_VERSION_PATCH
-#define TEST_JIG_VERSION_PATCH    (9)
-#endif /* TEST_JIG_VERSION_PATCH */
+
+// #ifndef TEST_JIG_VERSION_MAJOR
+// #define TEST_JIG_VERSION_MAJOR    (9)
+// #endif /* TEST_JIG_VERSION_MAJOR */
+// #ifndef TEST_JIG_VERSION_MINOR
+// #define TEST_JIG_VERSION_MINOR    (9)
+// #endif /* TEST_JIG_VERSION_MINOR */
+// #ifndef TEST_JIG_VERSION_PATCH
+// #define TEST_JIG_VERSION_PATCH    (9)
+// #endif /* TEST_JIG_VERSION_PATCH */
 
 
 enum test_jig_msg

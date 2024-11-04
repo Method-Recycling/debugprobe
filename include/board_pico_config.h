@@ -42,8 +42,8 @@
 // UART config
 #define PROBE_UART_INTERFACE uart1
 #define PROBE_UART_BAUDRATE 115200
-#define PROBE_UART_TX 4
-#define PROBE_UART_RX 5
+#define PROBE_UART_TX 20
+#define PROBE_UART_RX 21
 
 // Test jig pins
 #define DUT_POWER_ENABLE_PIN 6
