@@ -40,12 +40,12 @@ TaskHandle_t uart_taskhandle;
 TickType_t last_wake, interval = 50;
 volatile TickType_t break_expiry;
 volatile bool timed_break;
-
+#define BUFF_SIZE 256
 /* Max 1 FIFO worth of data */
-static uint8_t tx_buf[255];
-static uint8_t rx_buf[255];
+static uint8_t tx_buf[BUFF_SIZE];
+static uint8_t rx_buf[BUFF_SIZE];
 // Actually s^-1 so 25ms
-#define DEBOUNCE_MS 80
+#define DEBOUNCE_MS 50
 static uint debounce_ticks = 5;
 
 #ifdef PROBE_UART_TX_LED
@@ -117,9 +117,9 @@ bool cdc_task(bool probe_mode)
 				}
 				else
 				{
-					uint8_t data[100] = { TEST_JIG_MSG_PASS_THRU_TO_DUT };
+					uint8_t data[BUFF_SIZE] = { TEST_JIG_MSG_PASS_THRU_TO_DUT };
 					memcpy(&data[1], rx_buf, written);
-					uint8_t  buf[100] = { };
+					uint8_t  buf[BUFF_SIZE] = { };
 					uint16_t buf_size = msg_protocol_pack(&dut_shell_msg_protocol, data, written+1, buf);
 					tud_cdc_write(buf, buf_size);
 					tud_cdc_write_flush();
@@ -308,7 +308,7 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const* line_coding)
   /* Set the tick thread interval to the amount of time it takes to
    * fill up half a FIFO. Millis is too coarse for integer divide.
    */
-  uint32_t micros = (5000 * 1000 * 16 * 10) / MAX(line_coding->bit_rate, 1);
+  uint32_t micros = (13000 * 1000 * 16 * 10) / MAX(line_coding->bit_rate, 1);
   /* Modifying state, so park the thread before changing it. */
   vTaskSuspend(uart_taskhandle);
   interval = MAX(1, micros / ((1000 * 1000) / configTICK_RATE_HZ));
