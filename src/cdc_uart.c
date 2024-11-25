@@ -76,12 +76,13 @@ void cdc_uart_init(void)
 }
 
 
-bool cdc_task(bool probe_mode)
+bool cdc_task()
 {
 	static int was_connected = 0;
 	static uint cdc_tx_oe = 0;
 	uint rx_len = 0;
 	bool keep_alive = false;
+	bool probe_mode = gpio_get(TESTJIG_MODE_PIN);
 
 	// Consume uart fifo regardless even if not connected
 	while(uart_is_readable(PROBE_UART_INTERFACE) && (rx_len < sizeof(rx_buf)))
@@ -274,12 +275,12 @@ void cdc_thread(void *ptr)
 {
 	init_gpios();
 	init_adcs();
-	bool probe_mode = gpio_get(TESTJIG_MODE_PIN);
+	// bool probe_mode = gpio_get(TESTJIG_MODE_PIN);
 
-	if(!probe_mode)
-	{
+	// if(!probe_mode)
+	// {
 		tj_init(&test_jig);
-	}
+	// }
 
 	BaseType_t delayed;
 	last_wake = xTaskGetTickCount();
@@ -288,7 +289,7 @@ void cdc_thread(void *ptr)
 	/* Threaded with a polling interval that scales according to linerate */
 	while (1)
 	{
-		keep_alive = cdc_task(probe_mode);
+		keep_alive = cdc_task();
 		if (!keep_alive)
 		{
 			delayed = xTaskDelayUntil(&last_wake, interval);

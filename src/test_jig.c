@@ -124,6 +124,10 @@ static void process_input_message(uint8_t* data, uint16_t size)
 		send_ack();
 		break;
 	}
+	case TEST_JIG_MSG_ACK: {
+		send_ack();
+		break;
+	}
 
 	case TEST_JIG_MSG_RS485_TICKLE: {
 		break;
